@@ -1,15 +1,14 @@
 defmodule StockMonitor.Server do
   use GenServer
-  import Supervisor.Spec
-
-  alias StockMonitor.StockSupervisor
+  
+  alias StockMonitor.{StockSupervisor, Application}
     
   defmodule State do
     defstruct sup: nil, stock_supervisor: nil, stock_worker: nil, url: nil
   end
   
   def start_link(sup, pool_config) do
-    GenServer.start_link(__MODULE__, [sup, pool_config], name: __MODULE__)
+    GenServer.start_link(__MODULE__, [sup, pool_config])
   end
 
   def start_application do
@@ -19,7 +18,9 @@ defmodule StockMonitor.Server do
   def start_child({_, _, _, _, _} = stock_data) do
     GenServer.call(__MODULE__, {:start_child, stock_data})
   end
-    
+
+
+  
   def init([sup, pool_config]) when is_pid(sup) do
     init(pool_config, %State{sup: sup, stock_worker: []})
   end
@@ -28,9 +29,8 @@ defmodule StockMonitor.Server do
     init(rest, %{state | url: url})
   end
   
-
   def init([], state) do
-    send(self, :start_stock_supervisor)
+    send(self(), :start_stock_supervisor)
     {:ok, state}
   end
 
@@ -39,26 +39,20 @@ defmodule StockMonitor.Server do
   end
   
   def handle_call({:start_child, {_, _, _, _, _} = stock_data}, _from, state) do
-    {:ok, child_pid} = StockSupervisor.start_child(stock_data)
+    {:ok, child_pid} = StockSupervisor.start_child(state.stock_supervisor, stock_data)
     stock_worker = [child_pid | state.stock_worker]
     {:reply, child_pid, %{state | stock_worker: stock_worker}}
   end
   
   def handle_info(:start_stock_supervisor, state) do
-    {:ok, stock_supervisor} = Supervisor.start_child(state.sup, supervisor_spec(state.mfa))
+
+    child_spec = [restart: :temporary, start: {StockSupervisor, :start_link, 0}, type: :supervisor]
+
+    {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup, child_spec)
     new_state = %{state | stock_supervisor: stock_supervisor}
     {:noreply, new_state}
   end
 
-  defp supervisor_spec(mfa) do
-    opts = [restart: :temporary]
-    supervisor(StockMonitor.StockSupervisor, [mfa], opts)
-  end
-
-  def test_get_stock({ticker_symbol, trade_type, price, quantity, id} = stock_data) do
-    start_child(stock_data)
-  end
-  
   defp get_stock(url) do
     result = url
     |> HTTPoison.get
