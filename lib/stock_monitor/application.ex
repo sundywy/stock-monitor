@@ -7,14 +7,15 @@ defmodule StockMonitor.Application do
 
   def start(_type, _args) do
     # List all child processes to be supervised
+
+    pool_config = []
+    
     children = [
-      # Starts a worker by calling: StockMonitor.Worker.start_link(arg)
-      # {StockMonitor.Worker, arg},
+      worker(StockMonitor.Server, [self, pool_config])
     ]
 
-    # See https://hexdocs.pm/elixir/Supervisor.html
-    # for other strategies and supported options
-    opts = [strategy: :one_for_one, name: StockMonitor.Supervisor]
-    Supervisor.start_link(children, opts)
+    opts = [strategy: :one_for_all]
+
+    supervise(children, opts)
   end
 end
