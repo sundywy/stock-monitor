@@ -14,7 +14,7 @@ defmodule StockMonitor.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
+      extra_applications: [:httpoison, :json],
       mod: {StockMonitor.Application, []}
     ]
   end
@@ -22,7 +22,8 @@ defmodule StockMonitor.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:httpoison, "~> 1.1.0"}
+      {:httpoison, "~> 1.1.0"},
+      {:json, "~> 1.2.0"}
     ]
   end
 end
