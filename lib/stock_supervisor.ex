@@ -12,12 +12,8 @@ defmodule StockMonitor.StockSupervisor do
   end
   
   def start_child({_, _, _, _, _} = state) do
-    child_spec = {Stock, state}  # [start: {Stock, [state]}] 
+    child_spec = {Stock, state} 
     DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
 
-  # def get_pid() do
-  #   {:ok, __MODULE__}
-  # end
-  
 end

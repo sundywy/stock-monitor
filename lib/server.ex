@@ -30,7 +30,6 @@ defmodule StockMonitor.Server do
   end
   
   def init([], state) do
-    # send(self(), :start_stock_supervisor)
     {:ok, state}
   end
 
@@ -43,25 +42,8 @@ defmodule StockMonitor.Server do
     stock_worker = [child_pid | state.stock_worker]
     {:reply, child_pid, %{state | stock_worker: stock_worker}}
   end
+
   
-  def handle_info(:start_stock_supervisor, state) do
-
-    IO.puts("Starting stock supervisor")
-
-    
-    # {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup)
-
-    stock_supervisor = Application.start_child_supervisor()
-    
-    ## this will return server pid instead of stock supervisor pid
-    # {:ok, stock_supervisor} = StockSupervisor.get_pid()
-    
-    IO.inspect(stock_supervisor)
-    
-    new_state = %{state | stock_supervisor: stock_supervisor}
-
-    {:noreply, new_state}
-  end
 
   defp get_stock(url) do
     result = url
