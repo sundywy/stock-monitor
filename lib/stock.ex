@@ -7,6 +7,7 @@ defmodule StockMonitor.Stock do
   
   def start_link({ticker_symbol, trade_type, price, quantity, id}) do
     stock = %StockData{ticker_symbol: ticker_symbol, trade_type: trade_type, price: price, quantity: quantity, id: id}
+    IO.puts(stock)
     Agent.start_link(fn -> stock end)
   end
 

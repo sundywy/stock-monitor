@@ -4,7 +4,7 @@ defmodule StockMonitor.StockSupervisor do
   alias StockMonitor.Stock
   
   def start_link(arg) do
-    Supervisor.start_link(__MODULE__, arg)
+    DynamicSupervisor.start_link(__MODULE__, arg, name: __MODULE__)
   end
 
   def init(_arg) do
@@ -12,8 +12,7 @@ defmodule StockMonitor.StockSupervisor do
   end
   
   def start_child({_, _, _, _, _} = state) do
-
-    child_spec = {Stock, start: {Stock, :start_link, [state]}}
+    child_spec = {Stock, start: {Stock, :start_link, [state]}} 
     DynamicSupervisor.start_child(__MODULE__, child_spec)
   end
 

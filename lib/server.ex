@@ -1,7 +1,7 @@
 defmodule StockMonitor.Server do
   use GenServer
   
-  alias StockMonitor.{StockSupervisor, Application}
+  alias StockMonitor.{StockSupervisor}
     
   defmodule State do
     defstruct sup: nil, stock_supervisor: nil, stock_worker: nil, url: nil
@@ -25,7 +25,7 @@ defmodule StockMonitor.Server do
     init(pool_config, %State{sup: sup, stock_worker: []})
   end
 
-  def init({[:url, url | rest]}, state) do
+  def init([{:url, url} | rest], state) do
     init(rest, %{state | url: url})
   end
   
@@ -39,16 +39,18 @@ defmodule StockMonitor.Server do
   end
   
   def handle_call({:start_child, {_, _, _, _, _} = stock_data}, _from, state) do
-    {:ok, child_pid} = StockSupervisor.start_child(state.stock_supervisor, stock_data)
+    {:ok, child_pid} = StockSupervisor.start_child(stock_data)
     stock_worker = [child_pid | state.stock_worker]
     {:reply, child_pid, %{state | stock_worker: stock_worker}}
   end
   
   def handle_info(:start_stock_supervisor, state) do
 
-    child_spec = [restart: :temporary, start: {StockSupervisor, :start_link, 0}, type: :supervisor]
+    # child_spec = [restart: :temporary, start: {StockSupervisor, :start_link, [:ok]}, type: :supervisor]
+    # {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup, child_spec)
 
-    {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup, child_spec)
+    {:ok, stock_supervisor} = StockSupervisor.get_pid()
+    
     new_state = %{state | stock_supervisor: stock_supervisor}
     {:noreply, new_state}
   end
