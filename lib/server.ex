@@ -1,14 +1,14 @@
 defmodule StockMonitor.Server do
   use GenServer
   
-  alias StockMonitor.{StockSupervisor}
+  alias StockMonitor.{StockSupervisor, Application}
     
   defmodule State do
     defstruct sup: nil, stock_supervisor: nil, stock_worker: nil, url: nil
   end
   
   def start_link(sup, pool_config) do
-    GenServer.start_link(__MODULE__, [sup, pool_config])
+    GenServer.start_link(__MODULE__, [sup, pool_config], name: __MODULE__)
   end
 
   def start_application do
@@ -30,7 +30,7 @@ defmodule StockMonitor.Server do
   end
   
   def init([], state) do
-    send(self(), :start_stock_supervisor)
+    # send(self(), :start_stock_supervisor)
     {:ok, state}
   end
 
@@ -46,12 +46,20 @@ defmodule StockMonitor.Server do
   
   def handle_info(:start_stock_supervisor, state) do
 
-    # child_spec = [restart: :temporary, start: {StockSupervisor, :start_link, [:ok]}, type: :supervisor]
-    # {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup, child_spec)
+    IO.puts("Starting stock supervisor")
 
-    {:ok, stock_supervisor} = StockSupervisor.get_pid()
+    
+    # {:ok, stock_supervisor} = Application.start_child_supervisor(state.sup)
+
+    stock_supervisor = Application.start_child_supervisor()
+    
+    ## this will return server pid instead of stock supervisor pid
+    # {:ok, stock_supervisor} = StockSupervisor.get_pid()
+    
+    IO.inspect(stock_supervisor)
     
     new_state = %{state | stock_supervisor: stock_supervisor}
+
     {:noreply, new_state}
   end
 
